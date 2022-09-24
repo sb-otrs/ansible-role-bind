@@ -312,9 +312,9 @@ bind_tsig_keys:
 
 These keys are not used with zone transfer (XFR) and are used for dynamic updates authentication. 
 
-Add to your `bind_zones`:  
+Now include to `bind_zones`:  
 
-**allow_update**  
+**allow_update** Example   
 
 ```Yaml
 bind_zones:
@@ -330,7 +330,7 @@ bind_zones:
       - "key {{ bind_tsig_keys[0].name }}" # For Using TSIG Key
 ```
 
-**allow_update**  
+**allow_update** Example   
 
 ```Yaml
 bind_zones:
@@ -342,7 +342,7 @@ bind_zones:
       - pub01.mydomain.com.
       - pub02.mydomain.com.
     update_policy:
-      - "grant {{ bind_tsig_keys[0].name }} zonesub A""
+      - "grant {{ bind_tsig_keys[0].name }} zonesub A"
       - "grant {{ bind_tsig_keys[0].name }} zonesub TXT"
       - "grant local-ddns zonesub any"
 ```
