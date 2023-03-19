@@ -102,7 +102,7 @@
     group: "{{ bind_group }}"
   become: yes
   when: bind_tsig_keys is defined and bind_tsig_keys|length > 0
-  notify: reload bind
+  notify: Reload bind
   tags: bind
 
 - name: Configure zones
