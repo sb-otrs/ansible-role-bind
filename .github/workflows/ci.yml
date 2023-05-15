@@ -1,51 +1,82 @@
 ---
 name: CI
-on:
+'on':
   pull_request:
   push:
     branches:
       - master
-env:
-  PY_COLORS: '1'
-  ANSIBLE_FORCE_COLOR: '1'
+
+defaults:
+  run:
+    working-directory: "bertvv.bind"
 
 jobs:
-  test:
-    name: Molecule
-    runs-on: ["vm-ssd"]
-    strategy:
-      matrix:
-        distro:
-          - centos8
-          - centos7
-          - debian10
-          - debian9
-          - ubuntu2204
-          - ubuntu2004
-
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@v3
+        with:
+          path: "bertvv.bind"
 
-      - name: Set up Python 3
+      - name: Set up Python 3.
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install test dependencies.
+        run: pip3 install yamllint
+
+      - name: Lint code.
+        run: |
+          yamllint .
+  molecule:
+    name: Molecule
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro:
+          - image: "quay.io/centos/centos"
+            tag: "stream8"
+          - image: "quay.io/centos/centos"
+            tag: "centos7"
+          - image: "debian"
+            tag: "11"
+          - image: "debian"
+            tag: "10"
+          - image: "ubuntu"
+            tag: "20.04"
+          - image: "ubuntu"
+            tag: "18.04"
+          - image: "ubuntu"
+            tag: "16.04"
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v2
+        with:
+          path: "bertvv.bind"
+
+      - name: Set up Python 3.
+        uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
       - name: Install test dependencies.
-        run: pip3 install ansible molecule molecule-docker yamllint ansible-lint docker netaddr dnspython
+        run: pip3 install ansible molecule molecule-plugins[docker] docker netaddr dnspython
 
-      - name: Install galaxy role
-        run: |
-          ansible-galaxy role remove udienz.bind
-          ansible-galaxy role install -f -r requirements.yml
-
-      - name: Run Molecule Primary/Secondary/Forwarder converge
-        run: molecule converge
+      - name: Run Molecule Primary/Secondary/Forwarder tests
+        run: molecule test
         env:
-          MOLECULE_DISTRO: ${{ matrix.distro }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          image: ${{ matrix.distro.image }}
+          tag: ${{ matrix.distro.tag }}
 
-      - name: Run Molecule Primary/Secondary/Forwarder destroy
-        run: molecule destroy
+      - name: Run Molecule Shared Inventory tests
+        run: molecule test --scenario-name shared_inventory
         env:
-          MOLECULE_DISTRO: ${{ matrix.distro }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          image: ${{ matrix.distro.image }}
+          tag: ${{ matrix.distro.tag }}

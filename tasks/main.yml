@@ -73,8 +73,8 @@
 
 - name: Create serial, based on UTC UNIX time
   ansible.builtin.command: date -u +%s
-  register: timestamp
-  changed_when: false
+  register: _bind_timestamp
+  changed_when: _bind_timestamp.rc != 0
   run_once: true
   check_mode: false
   tags: bind
@@ -117,13 +117,13 @@
     group: "{{ bind_group }}"
     mode: 0640
     setype: named_conf_t
-    validate: named-checkconf %s
+    validate: 'named-checkconf %s'
   become: true
   notify: Reload bind
   tags: bind
 
 - name: Start BIND service
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ bind_service }}"
     state: started
     enabled: true

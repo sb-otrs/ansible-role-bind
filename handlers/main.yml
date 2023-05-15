@@ -1,6 +1,6 @@
 ---
 - name: Reload bind
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ bind_service }}"
     state: reloaded
   become: true
