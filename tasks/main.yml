@@ -1,5 +1,4 @@
 ---
-
 # Initialise distribution-specific variables
 - name: Source specific variables
   ansible.builtin.include_vars: "{{ item }}"
@@ -58,6 +57,7 @@
     - "{{ bind_dir }}/dynamic"
     - "{{ bind_dir }}/data"
     - "{{ bind_zone_dir }}"
+    - "{{ bind_log_dir }}"
   tags: bind
 
 - name: Ensure Directory for Cached Secondary Zones exists
@@ -88,7 +88,20 @@
     owner: root
     group: "{{ bind_group }}"
   become: true
-  when: bind_dns_keys is defined and bind_dns_keys|length > 0
+  when: bind_dns_keys is defined and bind_dns_keys | length > 0
+  notify: Reload bind
+  tags: bind
+
+# file to load tsig keys for zone authentication/dynamic/secure update
+- name: Create file for tsig keys for authenticated dynamic updates
+  template:
+    src: tsig_keys.j2
+    dest: "{{ bind_conf_dir }}/{{ tsig_file }}"
+    mode: 0640
+    owner: root
+    group: "{{ bind_group }}"
+  become: true
+  when: bind_tsig_keys is defined and bind_tsig_keys|length > 0
   notify: Reload bind
   tags: bind
 
